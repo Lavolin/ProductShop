@@ -1,4 +1,6 @@
-﻿using ProductShop.DTOs.Category;
+﻿using System.Linq;
+using AutoMapper.QueryableExtensions;
+using ProductShop.DTOs.Category;
 using ProductShop.DTOs.CategoryProduct;
 using ProductShop.DTOs.Product;
 
@@ -33,8 +35,12 @@ namespace ProductShop
 
             ProductShopContext dbContext = new ProductShopContext();
 
-            InitializeFilePath("categories-products.json");
-            string inputJson = File.ReadAllText(filePath);
+            InitializeOutputFilePath("products-in-range.json");
+
+            //InitializeDataSetFilePath("categories-products.json");
+
+
+            //string inputJson = File.ReadAllText(filePath);
 
             //string inputJson = File.ReadAllText("../../../Datasets/users.json");
 
@@ -44,8 +50,11 @@ namespace ProductShop
 
             //Console.WriteLine("Database was successfully created");
 
-            string output = ImportCategoryProducts(dbContext, inputJson);
-            Console.WriteLine(output);
+           // string output = ImportCategoryProducts(dbContext, inputJson);
+            //Console.WriteLine(output);
+
+            string json = GetProductsInRange(dbContext);
+            File.WriteAllText(filePath, json);
         }
 
         //Ex 1.	Import Data
@@ -139,14 +148,33 @@ namespace ProductShop
             return $"Successfully imported {validCategoryProducts.Count}";
         }
 
+        //Ex 5. Export Products in Range
+
+        public static string GetProductsInRange(ProductShopContext context)
+        {
+            ExportProductRangeDto[] products = context
+                .Products
+                .Where(p => p.Price >= 500 && p.Price <= 1000)
+                .OrderBy(p => p.Price)
+                .ProjectTo<ExportProductRangeDto>(mapper.ConfigurationProvider)
+                .ToArray();
+
+            string json = JsonConvert.SerializeObject(products, Formatting.Indented);
+            return json;
+        }
 
 
-        private static void InitializeFilePath(string fileName)
+        private static void InitializeDataSetFilePath(string fileName)
         {
             filePath =
                 Path.Combine(Directory.GetCurrentDirectory(), "../../../Datasets/", fileName);
         }
 
+        private static void InitializeOutputFilePath(string fileName)
+        {
+            filePath =
+                Path.Combine(Directory.GetCurrentDirectory(), "../../../Results/", fileName);
+        }
         /// <summary>
         /// Executes all validation attributes in a class and return true or false
         /// </summary>
