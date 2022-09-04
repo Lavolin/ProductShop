@@ -5,6 +5,8 @@
     using Newtonsoft.Json;
 
     using Common;
+
+    [JsonObject]
     public class ImportUserDto
     {
         [JsonProperty("firstName")]

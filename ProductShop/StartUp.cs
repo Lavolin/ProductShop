@@ -1,4 +1,8 @@
-﻿namespace ProductShop
+﻿using ProductShop.DTOs.Category;
+using ProductShop.DTOs.CategoryProduct;
+using ProductShop.DTOs.Product;
+
+namespace ProductShop
 {
     using System;
     using System.Collections.Generic;
@@ -29,8 +33,9 @@
 
             ProductShopContext dbContext = new ProductShopContext();
 
-            InitializeFilePath("users.json");
+            InitializeFilePath("categories-products.json");
             string inputJson = File.ReadAllText(filePath);
+
             //string inputJson = File.ReadAllText("../../../Datasets/users.json");
 
 
@@ -39,10 +44,11 @@
 
             //Console.WriteLine("Database was successfully created");
 
-            string output = ImportUsers(dbContext, inputJson);
+            string output = ImportCategoryProducts(dbContext, inputJson);
             Console.WriteLine(output);
         }
 
+        //Ex 1.	Import Data
         public static string ImportUsers(ProductShopContext context, string inputJson)
         {
             ImportUserDto[] userDtos = JsonConvert.DeserializeObject<ImportUserDto[]>(inputJson);
@@ -63,6 +69,77 @@
             context.SaveChanges();
             return $"Successfully imported {validUsers.Count}";
         }
+
+        //Ex 2. Import Products
+        public static string ImportProducts(ProductShopContext context, string inputJson)
+        {
+            ImportProductDto[] productDtos = JsonConvert
+                .DeserializeObject<ImportProductDto[]>(inputJson);
+
+            ICollection<Product> validProducts = new List<Product>();
+            foreach (ImportProductDto pDto in productDtos)
+            {
+                if (!IsValid(pDto))
+                {
+                    continue;
+                }
+                Product product = mapper.Map<Product>(pDto);
+                validProducts.Add(product);
+            }
+
+            context.Products.AddRange(validProducts);
+            context.SaveChanges();
+
+            return $"Successfully imported {validProducts.Count}";
+        }
+
+        //Ex 3. Import Categories
+        public static string ImportCategories(ProductShopContext context, string inputJson)
+        {
+            ImportCategoryDto[] categoryDtos =
+                JsonConvert.DeserializeObject<ImportCategoryDto[]>(inputJson);
+
+            ICollection<Category> valiCategories = new List<Category>();
+            foreach (ImportCategoryDto cDto in categoryDtos)
+            {
+                if (!IsValid(cDto))
+                {
+                    continue;
+                }
+                Category category = mapper.Map<Category>(cDto);
+                valiCategories.Add(category);
+            }
+
+            context.Categories.AddRange(valiCategories);
+            context.SaveChanges();
+
+            return $"Successfully imported {valiCategories.Count}";
+        }
+
+        //Ex 4. Import Categories and Products
+        public static string ImportCategoryProducts(ProductShopContext context, string inputJson)
+        {
+            ImportCategoryProductDto[] categoryProductDtos =
+                JsonConvert.DeserializeObject<ImportCategoryProductDto[]>(inputJson);
+
+            ICollection<CategoryProduct> validCategoryProducts = new List<CategoryProduct>();
+            foreach (ImportCategoryProductDto cpDto in categoryProductDtos)
+            {
+                if (!IsValid(cpDto))
+                {
+                    continue;
+                }
+
+                CategoryProduct categoryProduct = mapper.Map<CategoryProduct>(cpDto);
+                validCategoryProducts.Add(categoryProduct);
+            }
+            context.CategoryProducts.AddRange(validCategoryProducts);
+            context.SaveChanges();
+
+            return $"Successfully imported {validCategoryProducts.Count}";
+        }
+
+
 
         private static void InitializeFilePath(string fileName)
         {
