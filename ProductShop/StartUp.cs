@@ -35,7 +35,7 @@ namespace ProductShop
 
             ProductShopContext dbContext = new ProductShopContext();
 
-            InitializeOutputFilePath("products-in-range.json");
+            InitializeOutputFilePath("users-sold-products.json");
 
             //InitializeDataSetFilePath("categories-products.json");
 
@@ -53,7 +53,7 @@ namespace ProductShop
            // string output = ImportCategoryProducts(dbContext, inputJson);
             //Console.WriteLine(output);
 
-            string json = GetProductsInRange(dbContext);
+            string json = GetSoldProducts(dbContext);
             File.WriteAllText(filePath, json);
         }
 
@@ -163,6 +163,25 @@ namespace ProductShop
             return json;
         }
 
+        //Ex 6. Export Sold Products
+        public static string GetSoldProducts(ProductShopContext context)
+        {
+            ExportUsersWithSoldProductsDto[] users = context
+                .Users
+                .Where(u => u.ProductsSold.Any(b => b.BuyerId.HasValue))
+                .OrderBy(u => u.LastName)
+                .ThenBy(u => u.FirstName)
+                .ProjectTo<ExportUsersWithSoldProductsDto>(mapper.ConfigurationProvider)
+                .ToArray();
+
+            return JsonConvert.SerializeObject(users, Formatting.Indented);
+        }
+
+        //Ex 8. Export Users and Products
+        public static string GetUsersWithProducts(ProductShopContext context)
+        {
+
+        }
 
         private static void InitializeDataSetFilePath(string fileName)
         {
@@ -175,6 +194,8 @@ namespace ProductShop
             filePath =
                 Path.Combine(Directory.GetCurrentDirectory(), "../../../Results/", fileName);
         }
+
+
         /// <summary>
         /// Executes all validation attributes in a class and return true or false
         /// </summary>

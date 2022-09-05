@@ -1,4 +1,6 @@
-﻿namespace ProductShop
+﻿using System.Linq;
+
+namespace ProductShop
 {
     using DTOs.User;
     using DTOs.Product;
@@ -21,6 +23,19 @@
                 .ForMember(d => d.SellerFullName,
                     mo 
                         => mo.MapFrom(s => $"{s.Seller.FirstName} {s.Seller.LastName}"));
+
+            //Inner DTO
+            this.CreateMap<Product, ExportUsersSoldProductsDto>()
+                .ForMember(d => d.BuyerFirstName, mo
+                    => mo.MapFrom(s => s.Buyer.FirstName))
+                .ForMember(d => d.BuyerLastName, mo
+                    => mo.MapFrom(s => s.Buyer.LastName));
+
+            //Outer DTO
+            this.CreateMap<User, ExportUsersWithSoldProductsDto>()
+                .ForMember(d => d.SoldProducts, mo
+                    => mo.MapFrom(s => s.ProductsSold
+                        .Where(p => p.BuyerId.HasValue)));
         }
     }
 }
