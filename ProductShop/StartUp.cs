@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using AutoMapper.QueryableExtensions;
+using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using ProductShop.DTOs.Category;
 using ProductShop.DTOs.CategoryProduct;
 using ProductShop.DTOs.Product;
@@ -35,7 +36,7 @@ namespace ProductShop
 
             ProductShopContext dbContext = new ProductShopContext();
 
-            InitializeOutputFilePath("users-sold-products.json");
+            InitializeOutputFilePath("users-and-products.json");
 
             //InitializeDataSetFilePath("categories-products.json");
 
@@ -53,7 +54,7 @@ namespace ProductShop
            // string output = ImportCategoryProducts(dbContext, inputJson);
             //Console.WriteLine(output);
 
-            string json = GetSoldProducts(dbContext);
+            string json = GetUsersWithProducts(dbContext);
             File.WriteAllText(filePath, json);
         }
 
@@ -180,6 +181,54 @@ namespace ProductShop
         //Ex 8. Export Users and Products
         public static string GetUsersWithProducts(ProductShopContext context)
         {
+            ExportUsersFullProductInfoDto[] users = context
+                .Users
+                .Where(u => u.ProductsSold.Any(b => b.BuyerId.HasValue))
+                .OrderByDescending(u => u.ProductsSold.Count(p => p.BuyerId.HasValue))
+                .ProjectTo<ExportUsersFullProductInfoDto>(mapper.ConfigurationProvider)
+                .ToArray();
+
+            ExportUsersInfoDto serDto = new ExportUsersInfoDto()
+            {
+                UsersCount = users.Length,
+                Users = users
+            };
+            JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings()
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+            };
+            string json = JsonConvert.SerializeObject(serDto, Formatting.Indented, 
+                jsonSerializerSettings);
+            return json;
+
+            //Manual Mapping
+            //ExportUsersInfoDto usersInfoDtoDto = new ExportUsersInfoDto()
+            //{
+            //    Users = context
+            //        .Users
+            //        .Where(u => u.ProductsSold.Any(b => b.BuyerId.HasValue)
+            //            .OrderByDescending(u => u.ProductsSold.Count(p => p.BuyerId.HasValue))
+            //            .Select(u => new ExportUsersFullProductInfoDto()
+            //            {
+            //                FirstName = u.FirstName,
+            //                LastName = u.LastName,
+            //                Age = u.Age,
+            //                SoldProductsInfo = new ExportProductsShortInfoDto()
+            //                {
+            //                    SoldProducts = u.ProductsSold,
+            //                    .Where(p => p.BuyerId.HasValue),
+            //                    .Select(p => new ExportSoldProductsShortInfoDto()
+            //                    {
+            //                        Name = p.Name,
+            //                        Price = ProductShopContext.Price
+            //                    })
+            //                    .ToArray()
+            //                }
+            //            }))
+            //                    .ToArray()
+
+
+            //};
 
         }
 
